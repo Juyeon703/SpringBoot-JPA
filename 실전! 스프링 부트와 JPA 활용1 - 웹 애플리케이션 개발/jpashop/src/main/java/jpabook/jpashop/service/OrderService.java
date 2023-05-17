@@ -1,9 +1,6 @@
 package jpabook.jpashop.service;
 
-import jpabook.jpashop.domain.Delivery;
-import jpabook.jpashop.domain.Member;
-import jpabook.jpashop.domain.Order;
-import jpabook.jpashop.domain.OrderItem;
+import jpabook.jpashop.domain.*;
 import jpabook.jpashop.domain.item.Item;
 import jpabook.jpashop.repository.ItemRepository;
 import jpabook.jpashop.repository.MemberRepository;
@@ -11,6 +8,8 @@ import jpabook.jpashop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -67,6 +66,11 @@ public class OrderService {
          * 도메인 모델 패턴 : 엔티티가 비즈니스 로직, 서비스계층은 단순히 엔티티에 필요한 요청 위임. => 객체지향 적극 활용
          * 트랜잭션 스크립트 패턴 : 엔티티에 비즈니스 로직 없고, 서비스 계층에서 대부분의 비즈니스 로직 처리.
          */
+    }
+
+    // 검색
+    public List<Order> findOrders(OrderSearch orderSearch) {
+        return orderRepository.findAllByString(orderSearch);
     }
 
 }
