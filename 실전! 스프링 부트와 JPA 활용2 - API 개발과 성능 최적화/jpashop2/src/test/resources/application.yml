@@ -1,0 +1,9 @@
+# 테스트 환경 설정
+# 테스트는 케이스 격리된 환경에서 실행하고, 끝나면 데이터를 초기화하는 것이 좋음. 따라서 메모리DB를 사용하는 것이 이상적임.
+# 테스트 환경과 애플리케이션 실행 환경은 보통 다르므로 보통 다른 설정 파일 사용.
+# spring boot는 테스트 환경 설정 시 datasource 설정이 없으면 기본적으로 메모리 모드를 사용함
+
+logging.level:
+  org.hibernate.SQL: debug
+  org.hibernate.orm.jdbc.bind: trace
+
