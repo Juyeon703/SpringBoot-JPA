@@ -86,4 +86,19 @@ public class OrderSimpleApiController {
             address = order.getDelivery().getAddress(); // LAZY 초기화
         }
     }
+
+    /**
+     * 간단한 주문 조회 - DTO 반환 + fetch join 최적화
+     * => fetch join 으로 쿼리 1번 날아감.
+     * => 페치 조인으로 이미 조회된 상태이므로 지연로딩 아님. 데이터 출력됨.
+     */
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> ordersV3() {
+         List<Order> orders = orderRepository.findAllWithMemberDelivery();
+
+        List<SimpleOrderDto> result = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(Collectors.toList());
+        return result;
+    }
 }
