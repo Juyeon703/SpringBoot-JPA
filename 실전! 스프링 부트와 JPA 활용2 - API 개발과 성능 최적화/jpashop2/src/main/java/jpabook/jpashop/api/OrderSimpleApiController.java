@@ -5,6 +5,7 @@ import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderSearch;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
+import jpabook.jpashop.repository.OrderSimpleQueryDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,5 +101,18 @@ public class OrderSimpleApiController {
                 .map(o -> new SimpleOrderDto(o))
                 .collect(Collectors.toList());
         return result;
+    }
+
+    /**
+     * 간단한 주문 조회 - JPA에서 DTO로 바로 조회
+     * => 쿼리 1번 + 원하는 데이터만 조회
+     *
+     * 성능상 V3보다 좋긴하나, 재사용성은 떨어짐
+     * => 애플리케이션 네트윅 용량 최적화(생각보다 미비)
+     *    리포지토리 재사용성 떨어짐, API 스펙에 맞춘 코드가 리포지토리에 들어가는 단점
+     */
+    @GetMapping("/api/v4/simple-orders")
+    public List<OrderSimpleQueryDto> ordersV4() {
+        return orderRepository.findOrderDtos();
     }
 }
