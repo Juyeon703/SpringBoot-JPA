@@ -1,12 +1,13 @@
 package jpabook.jpashop.api;
 
 import jpabook.jpashop.domain.*;
-import jpabook.jpashop.repository.OrderQueryDto;
-import jpabook.jpashop.repository.OrderQueryRepository;
+import jpabook.jpashop.repository.query.OrderFlatDto;
+import jpabook.jpashop.repository.query.OrderItemQueryDto;
+import jpabook.jpashop.repository.query.OrderQueryDto;
+import jpabook.jpashop.repository.query.OrderQueryRepository;
 import jpabook.jpashop.repository.OrderRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -170,5 +171,28 @@ public class OrderApiController {
     @GetMapping("/api/v5/orders")
     public List<OrderQueryDto> ordersV5() {
         return orderQueryRepository.findAllByDto_optimization();
+    }
+
+    /**
+     * V6. JPA에서 DTO로 바로 조회, 플랫 데이터(1Query) (1 Query)
+     * - 페이징 불가능...
+     *
+     * V6 -> 데이터 중복(OrderItem 기준 갯수로 출력됨), 쿼리 1번
+     * V6.1 -> 데이터 중복 없음, 쿼리 1번
+     */
+    @GetMapping("/api/v6/orders")
+    public List<OrderFlatDto> ordersV6() {
+        return orderQueryRepository.findAllByDto_flat();
+    }
+
+    @GetMapping("/api/v6.1/orders")
+    public List<OrderQueryDto> ordersV6_1() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+        return flats.stream()
+                .collect(Collectors.groupingBy(o -> new OrderQueryDto(o.getOrderId(), o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        Collectors.mapping(o -> new OrderItemQueryDto(o.getOrderId(), o.getItemName(), o.getOrderPrice(), o.getCount()), Collectors.toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDto(e.getKey().getOrderId(), e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),e.getKey().getAddress(), e.getValue()))
+                .collect(Collectors.toList());
     }
 }

@@ -1,4 +1,4 @@
-package jpabook.jpashop.repository;
+package jpabook.jpashop.repository.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
