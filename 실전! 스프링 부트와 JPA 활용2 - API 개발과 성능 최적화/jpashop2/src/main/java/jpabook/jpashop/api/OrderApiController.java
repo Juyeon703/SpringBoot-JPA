@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -111,6 +112,38 @@ public class OrderApiController {
     @GetMapping("/api/v3/orders")
     public List<OrderDto> ordersV3() {
         List<Order> orders = orderRepository.findAllWithItem();
+
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+        return result;
+    }
+
+    /**
+     *  V3.1. 엔티티를 조회해서 DTO로 변환(fetch join 사용O)
+     *  - 페이징 가능
+     *
+     *  컬렉션을 패치 조인하면 일대다 조인이 발생하므로 데이터가 예측할 수 없이 증가한다.
+     *  일대다에서 1을 기준으로 페이징을 하는것이 목적인데 데이터는 다(N)를 기준으로 row를 생성한다. -> 다를 기준으로 페이징됨(메모리 페이징)
+     *
+     *  ===> 한계돌파 <=====
+     * @XToOne 관계를 모두 페치조인한다. ToOne관계는 row수를 증가시키지 않으므로 페이징 쿼리에 영향을 주지 않는다.
+     * 컬렉션은 지연 로딩으로 조회한다. 1+n+m -> 1+2(orderItem)+4(Item)
+     * 지연로딩 최적화를 위해 hibernate.default_batch_fetch_size(글로벌 설정, application.properties), @BatchSize(개별 최적화, 엔티티 클래스)를 적용한다.
+     * => in쿼리로 1(페치조인)+1(orderItem)+1(Item)
+     *
+     *  장점 :
+     *  - 조인보다 DB데이터 전송량이 최적화된다.
+     *
+     *  즉, ToOne관계는 페치 조인해도 페이징에 영향을 주지 않으므로 페치조인으로 쿼리수를 줄여서 해결하고
+     *  나머지는 Hibernate.default_batch_fetch_size로 최적화하자.
+     *  size는 100~1000사이 권장(In 절 파라미터), 1000으로 설정하는 것이 성능상 가장 좋지만,
+     *  결국 DB든 애플리케이션이든 순간 부하를 어디까지 견딜 수 있는지로 결정
+     */
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_1(@RequestParam(value = "offset", defaultValue = "0") int offset,
+                                     @RequestParam(value = "limit", defaultValue = "100") int limit) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit); // 컬렉션 제외 다대일만 페치조인
 
         List<OrderDto> result = orders.stream()
                 .map(o -> new OrderDto(o))
