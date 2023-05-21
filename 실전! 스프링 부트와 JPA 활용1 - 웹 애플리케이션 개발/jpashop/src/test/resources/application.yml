@@ -7,3 +7,10 @@ logging.level:
   org.hibernate.SQL: debug
   org.hibernate.orm.jdbc.bind: trace
 
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/jpashop?user=root
+    username: jpashop
+    password: 1111
+    driver-class-name: org.mariadb.jdbc.Driver
+
