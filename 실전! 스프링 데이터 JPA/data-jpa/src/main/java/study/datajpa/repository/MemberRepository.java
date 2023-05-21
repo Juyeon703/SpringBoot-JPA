@@ -1,7 +1,13 @@
 package study.datajpa.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * System.out.println(memberRepository.getClass()) => class com.sun.proxy.$ProxyXXX
@@ -21,4 +27,62 @@ import study.datajpa.entity.Member;
  */
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
+    /**
+     * 1.메소드 이름으로 쿼리 생성
+     *  - 조회: find…By ,read…By ,query…By get…By,
+     *  - COUNT: count…By 반환타입 long
+     *  - EXISTS: exists…By 반환타입 boolean
+     *  - 삭제: delete…By, remove…By 반환타입 long
+     *  - DISTINCT: findDistinct, findMemberDistinctBy
+     *  - LIMIT: findFirst3, findFirst, findTop, findTop3
+     *
+     * 2.메소드 이름으로 JPA NamedQuery 호출 **잘 안씀**
+     *  - Member, MemberJPARepository 예시1
+     *  - Member, MemberRepository 예시2
+     *  - 장점 : 애플리케이션 실행 시점에 오타(문법) 오류 찾아낼 수 있음.
+     *
+     * 3.@Query 어노테이션을 사용해서 리파지토리 인터페이스에 쿼리 직접 정의 (메서드에 JPQL 작성)
+     * - 파라미터가 증가하면 1번의 경우 지저분하기 때문에 3번 기능 자주 사용함.
+     * - 장점 : 애플리케이션 실행 시점에 오타(문법) 오류 찾아낼 수 있음.
+     */
+    List<Member> findByUsernameAndAgeGreaterThan(String username, int age); // 이름이 같고 age 이상
+
+    // NamedQuery
+    @Query(name = "Member.findByUsername") // name이랑 '도메인.메서드' 이름 같으면 @Query 생략 가능
+    List<Member> findByUsername(@Param("username") String username);
+
+    // 메서드에 JPQL 작성
+    @Query("select m from Member m where m.username = :username and m.age = :age")
+    List<Member> findUser(@Param("username") String username, @Param("age") int age);
+
+    // @Query 값 조회
+    @Query("select m.username from Member m")
+    List<String> findUsernameList();
+
+    // @Query Dto 조회
+    @Query("select new study.datajpa.dto.MemberDto(m.id, m.username, t.name) from Member m join m.team t")
+    List<MemberDto> findMemberDto();
+
+    /**
+     * 파라미터 바인딩
+     * 1. 위치 기반
+     *      select m from Member m where m.username = ?0
+     * 2. 이름 기반
+     *      select m from Member m where m.username = :name
+     */
+    // 컬렉션 파라미터 바인딩
+    @Query("select m from Member m where m.username in :names")
+    List<Member> findByNames(@Param("names") List<String> names);
+
+    /**
+     * 반환 타입
+     * - 컬렉션
+     *   결과 없음: 빈 컬렉션 반환
+     * - 단건 조회
+     *   결과 없음: null 반환
+     *   결과가 2건 이상: javax.persistence.NonUniqueResultException 예외 발생
+     */
+    List<Member> findListByUsername(String name); //컬렉션
+    Member findMemberByUsername(String name); //단건
+    Optional<Member> findOptionalByUsername(String name); //단건 Optional
 }
