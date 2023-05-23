@@ -618,4 +618,13 @@ public class QuerydslBasicTest {
         System.out.println("result = " + result);
         // result = member1_10
     }
+
+    // distinct
+    @Test
+    public void distinct() throws Exception {
+        List<String> result = queryFactory
+                .select(member.username).distinct()
+                .from(member)
+                .fetch();
+    }
 }
