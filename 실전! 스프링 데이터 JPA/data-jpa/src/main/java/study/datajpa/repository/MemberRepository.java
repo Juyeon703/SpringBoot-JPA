@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -121,4 +122,36 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Modifying(clearAutomatically = true) // executeUpdate 실행함, clearAutomatically = 영속성컨텍스트 초기화
     @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
     int bulkAgePlus(@Param("age") int age);
+
+    /**
+     * @EntityGraph
+     * -> 연관된 데이터 한번에 가져오기
+     *      사실상 페치 조인(FETCH JOIN)의 간편 버전
+     *      LEFT OUTER JOIN 사용
+     *
+     * + @NamedEntityGraph
+     */
+    @Query("select m from Member m left join fetch m.team")
+    List<Member> findMemberFetchJoin();
+
+    @Override
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findAll();
+
+    @EntityGraph(attributePaths = {"team"})
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+
+    // @NamedEntityGraph 사용
+    @EntityGraph("Member.all")
+    List<Member> findEntityGraphByUsername(String username);
+
+    /**
+     * 지연로딩 확인 방법
+     * 1. Hibernate 기능으로 확인
+     *    - Hibernate.isInitialized(member.getTeam())
+     * 2. JPA 표준 방법으로 확인
+     *    - PersistenceUnitUtil util = em.getEntityManagerFactory().getPersistenceUnitUtil();
+     *      util.isLoaded(member.getTeam());
+     */
 }

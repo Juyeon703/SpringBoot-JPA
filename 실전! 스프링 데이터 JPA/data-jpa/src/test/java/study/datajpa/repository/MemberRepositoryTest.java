@@ -1,5 +1,6 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,6 +11,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 
 import java.util.List;
 
@@ -23,6 +25,12 @@ class MemberRepositoryTest {
 
     @Autowired
     MemberRepository memberRepository;
+    
+    @Autowired
+    TeamRepository teamRepository;
+    
+    @Autowired
+    EntityManager em;
 
     @Test
     public void basicCRUD() {
@@ -116,4 +124,27 @@ class MemberRepositoryTest {
         assertThat(resultCount).isEqualTo(3);
     }
 
+    // N + 1 문제 -> 페치조인하면 1번
+    @Test
+    public void findMemberLazy() throws Exception {
+        //given
+        //member1 -> teamA
+        //member2 -> teamB
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+        em.flush();
+        em.clear();
+        //when
+        // List<Member> members = memberRepository.findAll(); // N+1 문제
+        // List<Member> members = memberRepository.findMemberFetchJoin(); // fetch join
+         List<Member> members = memberRepository.findAll(); // findAll 오버라이드해서 @EntityGraph 붙임
+        //then
+        for (Member member : members) {
+            System.out.println("member.getTeam().getName() = " + member.getTeam().getName());
+        }
+    }
 }
