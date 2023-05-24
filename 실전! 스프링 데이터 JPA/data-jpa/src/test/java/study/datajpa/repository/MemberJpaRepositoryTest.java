@@ -1,5 +1,6 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class MemberJpaRepositoryTest {
 
     @Autowired MemberJpaRepository memberJpaRepository;
+    @Autowired
+    EntityManager em;
 
     @Test
     public void basicCRUD() {
@@ -84,5 +87,23 @@ class MemberJpaRepositoryTest {
         int resultCount = memberJpaRepository.bulkAgePlus(20);
         //then
         assertThat(resultCount).isEqualTo(3);
+    }
+    
+    @Test
+    public void JpaEventBaseEntity() throws Exception {
+        //given
+        Member member = new Member("member1");
+        memberJpaRepository.save(member); //@PrePersist
+
+        Thread.sleep(100);
+        member.setUsername("member2");
+        em.flush(); //@PreUpdate
+        em.clear();
+
+        //when
+        Member findMember = memberJpaRepository.findById(member.getId()).get();
+        //then
+        System.out.println("findMember.createdDate = " + findMember.getCreatedDate());
+        // System.out.println("findMember.updatedDate = " + findMember.getUpdatedDate());
     }
 }
