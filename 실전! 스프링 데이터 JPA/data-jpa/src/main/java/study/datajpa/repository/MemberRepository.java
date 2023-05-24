@@ -1,5 +1,9 @@
 package study.datajpa.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -85,4 +89,28 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findListByUsername(String name); //컬렉션
     Member findMemberByUsername(String name); //단건
     Optional<Member> findOptionalByUsername(String name); //단건 Optional
+
+    /**
+     * 스프링 데이터 JPA 페이징과 정렬
+     *
+     * - 페이징과 정렬 파라미터
+     *      - org.springframework.data.domain.Sort : 정렬 기능
+     *      - org.springframework.data.domain.Pageable : 페이징 기능 (내부에 Sort 포함)
+     *
+     * - 특별한 반환 타입
+     *      - org.springframework.data.domain.Page : 추가 count 쿼리 결과를 포함하는 페이징
+     *      - org.springframework.data.domain.Slice : 추가 count 쿼리 없이 다음 페이지만 확인 가능
+     *                                                (내부적으로 limit + 1조회)
+     *      - List (자바 컬렉션): 추가 count 쿼리 없이 결과만 반환
+     */
+    Page<Member> findByAge(int age, Pageable pageable); //count 쿼리 사용
+
+    /* count 쿼리를 다음과 같이 분리할 수 있음
+    @Query(value = "select m from Member m left join m.team t",
+        countQuery = "select count(m) from Member m")
+    Page<Member> findByAge(int age, Pageable pageable); //count 쿼리 사용
+    */
+    // Slice<Member> findByAge(int age, Pageable pageable); //count 쿼리 사용 안함, 추가로 limit + 1을 조회(다음 페이지 여부)
+    // List<Member> findByAge(int age, Pageable pageable); //count 쿼리 사용 안함
+    // List<Member> findByAge(int age, Sort sort);
 }
